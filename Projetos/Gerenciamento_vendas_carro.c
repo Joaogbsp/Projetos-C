@@ -45,7 +45,7 @@ void buscarCarro() {
   scanf("%s", modeloBusca);
 
   for (int i = 0; i < totalCarros; i++) {
-    if (strcmp(modelos[i], modeloBusca) == 0) {
+    if (strcasecmp(modelos[i], modeloBusca) == 0) {
       printf("Modelo: %s\n", modelos[i]);
       printf("Ano: %d\n", anos[i]);
       printf("Cor: %s\n", cores[i]);
@@ -63,27 +63,28 @@ void alterarCarro() {
   scanf(" %s", modeloAltera);
 
   for (int i = 0; i < totalCarros; i++) {
-    if (strcmp(modelos[i], modeloAltera) == 0) {
+    if (strcasecmp(modelos[i], modeloAltera) == 0) {
       printf("Digite o novo modelo: ");
-      scanf("%s", modelos[i]);
       
+      scanf(" %s", modelos[i]);
       printf("Digite o novo ano: ");
-      scanf("%d", &anos[i]);
       
+      scanf(" %d", &anos[i]);
       printf("Digite a nova cor: ");
-      scanf("%s", cores[i]);
       
+      scanf(" %s", cores[i]);
       printf("Digite o novo preço: ");
-      scanf("%f", &precos[i]);
       
+      scanf(" %f", &precos[i]);
       printf("Digite a nova quantidade em estoque: ");
-      scanf("%d", &quantidades[i]);
       
+      scanf(" %d", &quantidades[i]);
+
       printf("Carro alterado com sucesso!\n");
 
       return;
     }
-    
+
   }
   printf("Carro não encontrado!\n");
 }
@@ -94,7 +95,7 @@ void alterarCarro() {
     scanf("%s", modeloExclui);
 
     for (int i = 0; i < totalCarros; i++) {
-      if (strcmp(modelos[i], modeloExclui) == 0) {
+      if (strcasecmp(modelos[i], modeloExclui) == 0) {
         for (int j = i; j < totalCarros - 1; j++) {
           strcpy(modelos[j], modelos[j + 1]);
           anos[j] = anos[j + 1];
@@ -123,18 +124,41 @@ void alterarCarro() {
     }
   }
 
-  void cadastrarCliente() {
+  int verificarClienteCadastrado(const char *nome, const char *cpf) {
+    for (int i = 0; i < totalClientes; i++) {
+        if (strcmp(nomesClientes[i], nome) == 0 && strcmp(cpfsClientes[i], cpf) == 0) {
+            return 1;
+        }
+    }
+    return 0; 
+}
+
+void cadastrarCliente() {
+    char novoNome[50];
+    char novoCPF[15];
+
     printf("Nome do cliente: ");
-    scanf("%s", nomesClientes[totalClientes]);
-    printf("CPF do cliente: ");
-    scanf("%s", cpfsClientes[totalClientes]);
+    scanf("%s", novoNome);
+
+    do {
+        printf("CPF do cliente: ");
+        scanf("%s", novoCPF);
+
+        if (verificarClienteCadastrado(novoNome, novoCPF)) {
+            printf("Cliente já cadastrado. Por favor, insira um CPF diferente.\n");
+        } else {
+            strcpy(nomesClientes[totalClientes], novoNome);
+            strcpy(cpfsClientes[totalClientes], novoCPF);
+        }
+    } while (verificarClienteCadastrado(novoNome, novoCPF));
+
     printf("Numero de telefone do cliente: ");
     scanf("%s", numTelefone[totalClientes]);
 
     totalClientes++;
 
     printf("Cliente cadastrado com sucesso!\n");
-  }
+}
 
   void alterarCliente() {
     char cpfAltera[15];
@@ -143,15 +167,12 @@ void alterarCarro() {
 
     for (int i = 0; i < totalClientes; i++) {
       if (strcmp(cpfsClientes[i], cpfAltera) == 0) {
-        
-        printf("Digite o novo nome: ");
-        scanf(" %s", nomesClientes[i]);
-        
-        printf("Digite o telefone: ");
+
+        printf("Digite o novo telefone: ");
         scanf(" %s", numTelefone[i]);
 
         printf("Cliente alterado com sucesso!\n");
-        
+
         return;
       }
     }
@@ -197,31 +218,64 @@ void alterarCarro() {
     }
   }
 
-  void realizarVendas() {
+void realizarVendas() {
     char modeloVenda[50];
     printf("Digite o modelo do carro a ser vendido: ");
     scanf("%s", modeloVenda);
 
+    int carroEncontrado = 0; // Flag para indicar se o carro foi encontrado no estoque
+
     for (int i = 0; i < totalCarros; i++) {
-      if (strcmp(modelos[i], modeloVenda) == 0) {
-        int quantidadeVenda;
-        printf("Digite a quantidade a ser vendida: ");
-        scanf("%d", &quantidadeVenda);
-        if (quantidadeVenda > 0 && quantidadeVenda <= quantidades[i]) {
-          quantidades[i] -= quantidadeVenda;
-          strcpy(nomesVendas[totalVendas], modelos[i]);
-          quantidadesVendas[totalVendas] = quantidadeVenda;
-          totalVendas++;
-          printf("Venda realizada com sucesso!\n");
-          return;
-        } else {
-          printf("Quantidade inválida ou insuficiente em estoque.\n");
-          return;
+        if (strcmp(modelos[i], modeloVenda) == 0) {
+            carroEncontrado = 1; // Indica que o carro foi encontrado no estoque
+
+            int quantidadeVenda;
+            printf("Digite a quantidade a ser vendida: ");
+            scanf("%d", &quantidadeVenda);
+            if (quantidadeVenda > 0 && quantidadeVenda <= quantidades[i]) {
+                quantidades[i] -= quantidadeVenda;
+                strcpy(nomesVendas[totalVendas], modelos[i]);
+                quantidadesVendas[totalVendas] = quantidadeVenda;
+                totalVendas++;
+                printf("Venda realizada com sucesso!\n");
+                return;
+            } else if (quantidadeVenda > 0 && quantidades[i] == 0) {
+                printf("Carro não disponível em estoque.\n");
+                printf("Deseja deixar a venda pendente? (s/n): ");
+                char opcao;
+                scanf(" %c", &opcao);
+                if (opcao == 's' || opcao == 'S') {
+                    printf("Venda pendente registrada com sucesso!\n");
+                    strcpy(nomesVendas[totalVendas], modelos[i]);
+                    quantidadesVendas[totalVendas] = quantidadeVenda;
+                    totalVendas++;
+                } else {
+                    printf("Venda cancelada.\n");
+                }
+                return;
+            } else {
+                printf("Quantidade inválida ou insuficiente em estoque.\n");
+                return;
+            }
         }
-      }
     }
-    printf("Carro não encontrado.\n");
-  }
+
+    if (!carroEncontrado) {
+        printf("Carro não encontrado.\n");
+        printf("Deseja deixar a venda pendente? (s/n): ");
+        char opcao;
+        scanf(" %c", &opcao);
+        if (opcao == 's' || opcao == 'S') {
+            printf("Venda pendente registrada com sucesso!\n");
+            strcpy(nomesVendas[totalVendas], modeloVenda);
+            printf("Digite a quantidade a ser vendida: ");
+            scanf("%d", &quantidadesVendas[totalVendas]);
+            totalVendas++;
+        } else {
+            printf("Venda cancelada.\n");
+        }
+    }
+}
 
   void consultarVendas() {
     if (totalVendas <= 0)
@@ -237,7 +291,7 @@ void alterarCarro() {
   int main() {
     int opcao;
     while (1) {
-      printf("\nMenu:\n");
+      printf("\n-------Menu-------\n");
       printf("(1) Inserir carro\n");
       printf("(2) Buscar carro\n");
       printf("(3) Alterar carro\n");
