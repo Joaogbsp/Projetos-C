@@ -5,7 +5,9 @@
 #define MAX_CARROS 100
 #define MAX_CLIENTES 100
 #define MAX_VENDAS 100
+#define MAX_VENDEDORES 10
 
+char senhasClientes[MAX_CLIENTES][50];
 char modelos[MAX_CARROS][50];
 int anos[MAX_CARROS];
 char cores[MAX_CARROS][20];
@@ -21,6 +23,29 @@ int totalClientes = 0;
 char nomesVendas[MAX_VENDAS][50];
 int quantidadesVendas[MAX_VENDAS];
 int totalVendas = 0;
+int totalVendedores = 0;
+
+typedef enum { VENDEDOR, CLIENTE } TipoUsuario;
+
+typedef struct {
+    char nome[50];
+    char senha[50];
+} Vendedor;
+Vendedor vendedores[MAX_VENDEDORES];
+
+typedef struct {
+    char username[50];
+    char password[50];
+    TipoUsuario tipo;
+} Usuario;
+
+Usuario usuarios[] = {
+    {"vendedor", "senha", VENDEDOR},
+    {"cliente", "senha", CLIENTE},
+};
+
+int totalUsuarios = sizeof(usuarios) / sizeof(Usuario);
+
 
 void inserirCarro() {
   printf("Modelo do carro: ");
@@ -65,19 +90,19 @@ void alterarCarro() {
   for (int i = 0; i < totalCarros; i++) {
     if (strcasecmp(modelos[i], modeloAltera) == 0) {
       printf("Digite o novo modelo: ");
-      
+
       scanf(" %s", modelos[i]);
       printf("Digite o novo ano: ");
-      
+
       scanf(" %d", &anos[i]);
       printf("Digite a nova cor: ");
-      
+
       scanf(" %s", cores[i]);
       printf("Digite o novo preço: ");
-      
+
       scanf(" %f", &precos[i]);
       printf("Digite a nova quantidade em estoque: ");
-      
+
       scanf(" %d", &quantidades[i]);
 
       printf("Carro alterado com sucesso!\n");
@@ -136,21 +161,20 @@ void alterarCarro() {
 void cadastrarCliente() {
     char novoNome[50];
     char novoCPF[15];
+    char novaSenha[50]; 
 
     printf("Nome do cliente: ");
     scanf("%s", novoNome);
 
-    do {
-        printf("CPF do cliente: ");
-        scanf("%s", novoCPF);
+    printf("CPF do cliente: ");
+    scanf("%s", novoCPF);
 
-        if (verificarClienteCadastrado(novoNome, novoCPF)) {
-            printf("Cliente já cadastrado. Por favor, insira um CPF diferente.\n");
-        } else {
-            strcpy(nomesClientes[totalClientes], novoNome);
-            strcpy(cpfsClientes[totalClientes], novoCPF);
-        }
-    } while (verificarClienteCadastrado(novoNome, novoCPF));
+    printf("Senha: ");
+    scanf("%s", novaSenha);
+
+    strcpy(nomesClientes[totalClientes], novoNome);
+    strcpy(cpfsClientes[totalClientes], novoCPF);
+    strcpy(senhasClientes[totalClientes], novaSenha);
 
     printf("Numero de telefone do cliente: ");
     scanf("%s", numTelefone[totalClientes]);
@@ -217,17 +241,32 @@ void cadastrarCliente() {
       }
     }
   }
+void cadastrarVendedor() {
+    if (totalVendedores < MAX_VENDEDORES) {
+        printf("Nome do vendedor: ");
+        scanf("%s", vendedores[totalVendedores].nome);
+
+        printf("Senha: ");
+        scanf("%s", vendedores[totalVendedores].senha);
+
+        totalVendedores++;
+
+        printf("Vendedor cadastrado com sucesso!\n");
+    } else {
+        printf("Limite máximo de vendedores atingido!\n");
+    }
+}
 
 void realizarVendas() {
     char modeloVenda[50];
     printf("Digite o modelo do carro a ser vendido: ");
     scanf("%s", modeloVenda);
 
-    int carroEncontrado = 0; // Flag para indicar se o carro foi encontrado no estoque
+    int carroEncontrado = 0;
 
     for (int i = 0; i < totalCarros; i++) {
         if (strcmp(modelos[i], modeloVenda) == 0) {
-            carroEncontrado = 1; // Indica que o carro foi encontrado no estoque
+            carroEncontrado = 1;
 
             int quantidadeVenda;
             printf("Digite a quantidade a ser vendida: ");
@@ -288,66 +327,155 @@ void realizarVendas() {
       printf("----------------------\n");
     }
   }
-  int main() {
-    int opcao;
-    while (1) {
-      printf("\n-------Menu-------\n");
-      printf("(1) Inserir carro\n");
-      printf("(2) Buscar carro\n");
-      printf("(3) Alterar carro\n");
-      printf("(4) Excluir carro\n");
-      printf("(5) Exibir estoque\n");
-      printf("(6) Cadastrar Cliente\n");
-      printf("(7) Alterar Cliente\n");
-      printf("(8) Excluir Cliente\n");
-      printf("(9) Exibir Clientes\n");
-      printf("(10) Realizar vendas\n");
-      printf("(11) Consultar vendas\n");
-      printf("(12) Sair\n");
-
-      printf("Escolha uma opção: ");
-      scanf("%d", &opcao);
-      getchar();
-
-      switch (opcao) {
-      case 1:
-        inserirCarro();
-        break;
-      case 2:
-        buscarCarro();
-        break;
-      case 3:
-        alterarCarro();
-        break;
-      case 4:
-        excluirCarro();
-        break;
-      case 5:
-        exibirEstoque();
-        break;
-      case 6:
-        cadastrarCliente();
-        break;
-      case 7:
-        alterarCliente();
-        break;
-      case 8:
-        excluirCliente();
-        break;
-      case 9:
-        exibirClientes();
-        break;
-      case 10:
-        realizarVendas();
-        break;
-      case 11:
-        consultarVendas();
-        break;
-      case 12:
-        printf("Saindo do programa. Até logo!\n");
-        exit(0);
+int fazerLogin(char *username, char *password, TipoUsuario *tipoUsuario) {
+    for (int i = 0; i < totalClientes; i++) {
+        if (strcmp(username, nomesClientes[i]) == 0 && strcmp(password, senhasClientes[i]) == 0) {
+            *tipoUsuario = CLIENTE;
+            return 1;
+        }
+    }
+  for (int i = 0; i < totalVendedores; i++) {
+          if (strcmp(username, vendedores[i].nome) == 0 && strcmp(password, vendedores[i].senha) == 0) {
+              *tipoUsuario = VENDEDOR;
+              return 1;
+          }
       }
+
+      return 0;
+  }
+
+int main() {
+    char escolha;
+    char username[50];
+    char password[50];
+    TipoUsuario tipoUsuario;
+
+    printf("Bem-vindo\n");
+
+    while (1) {
+        printf("Você deseja se cadastrar? (S/N): ");
+        scanf(" %c", &escolha);
+
+        if (escolha == 'S' || escolha == 's') {
+           
+            printf("Você deseja se cadastrar como vendedor ou cliente? (V/C): ");
+            scanf(" %c", &escolha);
+
+            if (escolha == 'V' || escolha == 'v') {
+                 
+                cadastrarVendedor();
+            } else if (escolha == 'C' || escolha == 'c') {
+               
+                cadastrarCliente();
+            } else {
+                printf("Opção inválida. Por favor, escolha V ou C.\n");
+            }
+        } else if
+          (escolha == 'N' || escolha == 'n') {
+           
+            printf("Nome de usuário: ");
+            scanf("%s", username);
+
+            printf("Senha: ");
+            scanf("%s", password);
+
+            if (fazerLogin(username, password, &tipoUsuario)) {
+                printf("Login bem-sucedido!\n");
+                break; 
+            } else {
+                printf("Usuário ou senha incorretos. Por favor, tente novamente.\n");
+            }
+        } else {
+            printf("Opção inválida. Por favor, escolha S ou N.\n");
+        }
+    }
+    if (tipoUsuario == VENDEDOR) {
+        int opcao;
+        while (1) {
+            printf("\n-------Menu do Vendedor-------\n");
+            printf("(1) Inserir carro\n");
+            printf("(2) Buscar carro\n");
+            printf("(3) Alterar carro\n");
+            printf("(4) Excluir carro\n");
+            printf("(5) Exibir estoque\n");
+            printf("(6) Cadastrar Cliente\n");
+            printf("(7) Alterar Cliente\n");
+            printf("(8) Excluir Cliente\n");
+            printf("(9) Exibir Clientes\n");
+            printf("(10) Realizar vendas\n");
+            printf("(11) Consultar vendas\n");
+            printf("(12) Sair\n");
+
+            printf("Escolha uma opção: ");
+            scanf("%d", &opcao);
+
+            switch (opcao) {
+                case 1:
+                    inserirCarro();
+                    break;
+                case 2:
+                    buscarCarro();
+                    break;
+              case 3:
+                alterarCarro();
+                break;
+              case 4:
+                excluirCarro();
+                break;
+              case 5:
+                exibirEstoque();
+                break;
+              case 6:
+                cadastrarCliente();
+                break;
+              case 7:
+                alterarCliente();
+                break;
+              case 8:
+                excluirCliente();
+                break;
+              case 9:
+                exibirClientes();
+                break;
+              case 10:
+                realizarVendas();
+                break;
+              case 11:
+                consultarVendas();
+                break;
+              case 12:
+                    printf("Saindo do programa. Até logo!\n");
+                    exit(0);
+                default:
+                    printf("Opção inválida. Por favor, escolha novamente.\n");
+            }
+        }
+    } else if (tipoUsuario == CLIENTE) {
+        int opcao;
+        while (1) {
+            printf("\n-------Menu do Cliente-------\n");
+            printf("(1) Buscar carro\n");
+            printf("(2) Realizar compras\n");
+            printf("(3) Consultar vendas\n");
+            printf("(4) Sair\n");
+
+            printf("Escolha uma opção: ");
+            scanf("%d", &opcao);
+
+            switch (opcao) {
+                case 1:
+                    buscarCarro();
+                    break;
+               
+               case 2:
+                    printf("Saindo do programa. Até logo!\n");
+                    exit(0);
+                default:
+                    printf("Opção inválida. Por favor, escolha novamente.\n");
+            }
+        }
     }
 
     return 0;
-  }
+}
+
